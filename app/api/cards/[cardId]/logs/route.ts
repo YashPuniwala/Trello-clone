@@ -3,19 +3,13 @@ import { auth } from "@clerk/nextjs/server";
 import { ENTITY_TYPE } from "@prisma/client";
 import { NextResponse } from "next/server";
 
-type LogsRouteContext = {
-  params: {
-    cardId: string;
-  };
-};
-
 export async function GET(
   request: Request,
-  context: LogsRouteContext
+  { params }: { params: { cardId: string } }
 ) {
   try {
     const { userId, orgId } = await auth();
-    const { cardId } = context.params;
+    const { cardId } = params;
 
     if (!userId || !orgId) {
       return new NextResponse("Unauthorized", { status: 401 });
