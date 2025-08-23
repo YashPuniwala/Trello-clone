@@ -25,46 +25,37 @@ export async function POST(req: Request) {
   const event = JSON.parse(body);
 
   try {
-    if (event.event === "payment_link.paid") {
-      const paymentData = event.payload.payment.entity;
-      const notes = event.payload.payment.entity.notes;
+  console.log("Webhook event received:", event);
 
-      if (!notes?.orgId) {
-        return new NextResponse("Org ID is required", { status: 400 });
-      }
+  if (event.event === "payment_link.paid") {
+    const paymentData = event.payload.payment.entity;
+    console.log("Payment entity:", paymentData);
 
-      // Save subscription/payment info
-      await db.orgSubscription.upsert({
-        where: { orgId: notes.orgId },
-        update: {
-          razorpayCustomerId: paymentData.customer_id,
-          razorpaySubscriptionId: null,
-          razorpayPlanId: null,
-          razorpayCurrentPeriodEnd: null,
-        },
-        create: {
-          orgId: notes.orgId,
-          razorpayCustomerId: paymentData.customer_id,
-        },
-      });
+    const notes = paymentData.notes;
+    console.log("Notes:", notes);
+
+    if (!notes?.orgId) {
+      console.error("No orgId in notes!");
+      return new NextResponse("Org ID missing", { status: 400 });
     }
 
-    if (event.event === "subscription.charged") {
-      const sub = event.payload.subscription.entity;
+    await db.orgSubscription.upsert({
+      where: { orgId: notes.orgId },
+      update: {
+        razorpayCustomerId: paymentData.customer_id,
+      },
+      create: {
+        orgId: notes.orgId,
+        razorpayCustomerId: paymentData.customer_id,
+      },
+    });
 
-      await db.orgSubscription.update({
-        where: { orgId: sub.notes.orgId },
-        data: {
-          razorpaySubscriptionId: sub.id,
-          razorpayPlanId: sub.plan_id,
-          razorpayCurrentPeriodEnd: new Date(sub.current_end * 1000),
-        },
-      });
-    }
-
-    return new NextResponse("Webhook processed", { status: 200 });
-  } catch (err) {
-    console.error("Webhook error:", err);
-    return new NextResponse("Webhook processing failed", { status: 500 });
+    console.log("DB updated successfully for org:", notes.orgId);
   }
+
+  return new NextResponse("Webhook processed", { status: 200 });
+} catch (err) {
+  console.error("Webhook error:", err);
+  return new NextResponse("Webhook processing failed", { status: 500 });
+}
 }
