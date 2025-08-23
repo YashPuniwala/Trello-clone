@@ -1,19 +1,21 @@
 import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
 import { ENTITY_TYPE } from "@prisma/client";
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 
 export async function GET(
-  request: Request,
-  { params }: { params: { cardId: string } }
+  req: NextRequest,
+  { params }: { params: Promise<{ cardId: string }> } // ✅ params is a Promise
 ) {
   try {
     const { userId, orgId } = await auth();
-    const { cardId } = params;
 
     if (!userId || !orgId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
+
+    // ✅ Await the params before using
+    const { cardId } = await params;
 
     const auditLogs = await db.auditLog.findMany({
       where: {
