@@ -12,6 +12,10 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.next()
   }
 
+   if (req.nextUrl.pathname.startsWith("/api/webhook")) {
+    return NextResponse.next();
+  }
+
   // Allow public routes to pass through for unauthenticated users
   if (isPublicRoute(req) && !userId) {
     return NextResponse.next()
@@ -38,9 +42,9 @@ export default clerkMiddleware(async (auth, req) => {
   }
 
   // If user has org but tries to access select-org, redirect to org page
-  if (orgId && pathname.startsWith('/select-org')) {
-    return NextResponse.redirect(new URL(`/organization/${orgId}`, req.url))
-  }
+//   if (orgId && pathname.startsWith('/select-org')) {
+//   return NextResponse.redirect(new URL(`/organization/${orgId}`, req.url))
+// }
 
   // Allow access to org pages if orgId exists
   if (pathname.startsWith('/organization') && orgId) {

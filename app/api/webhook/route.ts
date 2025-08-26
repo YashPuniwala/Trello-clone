@@ -1,96 +1,86 @@
-// app/api/webhook/route.ts
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import crypto from "crypto";
+import { headers } from "next/headers";
+import Stripe from "stripe";
+import { stripe } from "@/lib/stripe";
 
-const RAZORPAY_WEBHOOK_SECRET = process.env.RAZORPAY_WEBHOOK_SECRET!;
+export const config = {
+  api: {
+    bodyParser: false, // ensure raw body
+  },
+};
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   const body = await req.text();
-  const signature = req.headers.get("x-razorpay-signature");
+const incomingHeaders = await headers();
+  const signature = incomingHeaders.get("Stripe-Signature");
 
   if (!signature) {
-    return NextResponse.json({ error: "Missing signature" }, { status: 400 });
+    return new NextResponse("Missing signature", { status: 400 });
   }
 
-  // Verify signature
-  const expectedSignature = crypto
-    .createHmac("sha256", RAZORPAY_WEBHOOK_SECRET)
-    .update(body)
-    .digest("hex");
-
-  if (expectedSignature !== signature) {
-    return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
-  }
-
-  const event = JSON.parse(body);
+  let event: Stripe.Event;
 
   try {
-    switch (event.event) {
-      case "payment_link.paid": {
-        const paymentData = event.payload.payment.entity;
-        const notes = paymentData.notes;
+    event = stripe.webhooks.constructEvent(
+      body,
+      signature,
+      process.env.STRIPE_WEBHOOK_SECRET!
+    );
+    console.log("✅ Received event:", event.type);
+  } catch (err) {
+    const errorMessage =
+      err instanceof Error ? err.message : "Unknown error verifying signature";
+    console.error("❌ Webhook signature verification failed:", errorMessage);
+    return new NextResponse(`Webhook Error: ${errorMessage}`, { status: 400 });
+  }
 
-        if (!notes?.orgId) {
-          console.error("Webhook error: Missing orgId in notes");
-          return NextResponse.json({ error: "Org ID is required" }, { status: 400 });
-        }
+  try {
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const subscription = await stripe.subscriptions.retrieve(
+        session.subscription as string
+      );
 
-        await db.orgSubscription.upsert({
-          where: { orgId: notes.orgId },
-          update: {
-            razorpayCustomerId: paymentData.customer_id,
-            razorpaySubscriptionId: null,
-            razorpayPlanId: null,
-            razorpayCurrentPeriodEnd: null,
-          },
-          create: {
-            orgId: notes.orgId,
-            razorpayCustomerId: paymentData.customer_id,
-          },
-        });
-
-        console.log("Payment link paid processed for org:", notes.orgId);
-        break;
+      if (!session?.metadata?.orgId) {
+        return new NextResponse("Org ID is required", { status: 400 });
       }
 
-      case "subscription.charged": {
-        const sub = event.payload.subscription.entity;
-
-        await db.orgSubscription.update({
-          where: { orgId: sub.notes.orgId },
-          data: {
-            razorpaySubscriptionId: sub.id,
-            razorpayPlanId: sub.plan_id,
-            razorpayCurrentPeriodEnd: new Date(sub.current_end * 1000),
-          },
-        });
-
-        console.log("Subscription charged processed for org:", sub.notes.orgId);
-        break;
-      }
-
-      case "subscription.activated": {
-        const sub = event.payload.subscription.entity;
-        console.log("Subscription activated:", sub.id);
-        // (Optional) update DB if you need to track activation state
-        break;
-      }
-
-      case "payment.failed": {
-        const payment = event.payload.payment.entity;
-        console.warn("Payment failed:", payment.id);
-        // (Optional) log failures or notify admins
-        break;
-      }
-
-      default:
-        console.log("Unhandled event:", event.event);
+      await db.orgSubscription.create({
+        data: {
+          orgId: session.metadata.orgId,
+          stripeSubscriptionId: subscription.id,
+          stripeCustomerId: subscription.customer as string,
+          stripePriceId: subscription.items.data[0].price.id,
+          stripeCurrentPeriodEnd: new Date(
+            subscription.current_period_end * 1000
+          ),
+        },
+      });
     }
 
-    return NextResponse.json({ status: "ok" });
+    if (event.type === "invoice.payment_succeeded") {
+      const invoice = event.data.object as Stripe.Invoice;
+      const subscription = await stripe.subscriptions.retrieve(
+        invoice.subscription as string
+      );
+
+      await db.orgSubscription.update({
+        where: {
+          stripeSubscriptionId: subscription.id,
+        },
+        data: {
+          stripePriceId: subscription.items.data[0].price.id,
+          stripeCurrentPeriodEnd: new Date(
+            subscription.current_period_end * 1000
+          ),
+        },
+      });
+    }
+
+    return new NextResponse(null, { status: 200 });
   } catch (err) {
-    console.error("Webhook error:", err);
-    return NextResponse.json({ error: "Webhook processing failed" }, { status: 500 });
+    console.error("❌ Error handling webhook:", err);
+    return new NextResponse("Webhook handler failed", { status: 500 });
   }
 }

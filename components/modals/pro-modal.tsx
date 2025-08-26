@@ -5,13 +5,13 @@ import Image from "next/image";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Button } from "../ui/button";
 import { useAction } from "@/hooks/use-action";
-import { razorpayRedirect } from "@/app/action/razorpay-connect";
 import { toast } from "sonner";
+import { stripeRedirect } from "@/app/action/stripe-redirect";
 
 const ProModal = () => {
   const proModal = useProModal();
 
-  const { execute, isLoading } = useAction(razorpayRedirect, {
+  const { execute, isLoading } = useAction(stripeRedirect, {
     onSuccess: (data) => {
       window.location.href = data;
     },

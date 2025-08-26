@@ -102,11 +102,13 @@ model OrgSubscription {
   id        String   @id @default(uuid())
   orgId     String   @unique
 
-  razorpayCustomerId     String? @unique @map(name: "razorpay_customer_id")
-  razorpaySubscriptionId String? @unique @map(name: "razorpay_subscription_id")
-  razorpayPlanId         String? @map(name: "razorpay_plan_id")
-  razorpayCurrentPeriodEnd DateTime? @map(name: "razorpay_current_period_end")
+  stripeCustomerId     String?   @unique @map("stripe_customer_id")
+  stripeSubscriptionId String?   @unique @map("stripe_subscription_id")
+  stripePriceId        String?   @map("stripe_price_id")
+  stripeCurrentPeriodEnd DateTime? @map("stripe_current_period_end")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("org_subscriptions")
 }

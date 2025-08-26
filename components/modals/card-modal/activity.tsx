@@ -8,7 +8,7 @@ interface ActivityProps {
     items: AuditLog[]
 }
 
-const Activity = ({ items }: ActivityProps) => {
+const Activity = async ({ items }: ActivityProps) => {
   if (!items || !Array.isArray(items)) {
     return (
       <div className="flex items-center text-red-500 text-sm">

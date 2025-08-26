@@ -13,10 +13,10 @@ export const checkSubscription = async () => {
 
   if (!orgSubscription) return false;
 
-  const periodEnd = orgSubscription.razorpayCurrentPeriodEnd?.getTime() ?? 0;
+  const periodEnd = orgSubscription.stripeCurrentPeriodEnd?.getTime() ?? 0;
 
   return (
-    !!orgSubscription.razorpayPlanId &&
+    !!orgSubscription.stripePriceId &&
     periodEnd + DAY_IN_MS > Date.now()
   );
 };
