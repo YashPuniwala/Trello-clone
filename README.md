@@ -1,36 +1,165 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🗂️ Trello Clone
 
-## Getting Started
+A **full-stack Trello-inspired project management tool** built with **Next.js, PostgreSQL, Prisma, Clerk Authentication, and Stripe**.  
+This project replicates Trello-like boards, lists, and cards with authentication, real-time updates, and payments.
 
-First, run the development server:
+---
 
-```bash
+## 🚀 Features
+
+- 🔑 **Authentication & Organization Management**  
+  - Powered by [Clerk](https://clerk.com) for secure sign-in, sign-up, and organization-based access.  
+
+- 🗂️ **Board & List Management**  
+  - Create, update, and delete **boards**.  
+  - Add multiple **lists** inside each board.  
+  - Add, edit, and reorder **cards** inside lists.
+
+- 🎨 **Modern UI**  
+  - Built with **Tailwind CSS** & responsive design.  
+  - Clean drag-and-drop interface.
+
+- 🖼️ **Image Integration**  
+  - Background images fetched dynamically from **Unsplash API**.
+
+- 💳 **Payments**  
+  - Stripe integration for handling payments.  
+  - Webhooks enabled for real-time updates.
+
+- 🛠️ **Database & ORM**  
+  - PostgreSQL with **Prisma ORM**.  
+  - Neon.tech cloud-hosted PostgreSQL database.
+
+- 🔔 **Webhooks**  
+  - Stripe Webhooks support.  
+  - Clerk Authentication webhooks.
+
+---
+
+## 🛠️ Tech Stack
+
+- **Frontend:** [Next.js](https://nextjs.org/), [React](https://react.dev/), [Tailwind CSS](https://tailwindcss.com/)
+- **Backend:** Next.js API Routes
+- **Database:** [PostgreSQL](https://www.postgresql.org/) with [Prisma](https://www.prisma.io/)
+- **Authentication:** [Clerk](https://clerk.com/)
+- **Payments:** [Stripe](https://stripe.com/)
+- **Image Provider:** [Unsplash API](https://unsplash.com/developers)
+
+---
+
+## ⚙️ Environment Variables Setup
+
+Create a `.env` file in the root directory and add the following:
+
+\`\`\`bash
+# Clerk Authentication Keys
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_************
+CLERK_SECRET_KEY=sk_test_************
+
+# Clerk Redirects
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/select-org
+NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/select-org
+NEXT_PUBLIC_CLERK_SIGN_IN_FORCE_REDIRECT_URL=/select-org
+NEXT_PUBLIC_CLERK_SIGN_UP_FORCE_REDIRECT_URL=/select-org
+
+# Database (Neon PostgreSQL)
+DATABASE_URL="postgresql://<user>:<password>@<host>/<db>?sslmode=require&channel_binding=require"
+
+# Unsplash API
+NEXT_PUBLIC_UNSPLASH_ACCESS_KEY=************
+
+# Stripe Keys
+STRIPE_API_KEY=sk_test_************
+STRIPE_WEBHOOK_SECRET=whsec_************
+
+# Application URL
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+\`\`\`
+
+⚠️ **Important:**  
+- Never commit your real `.env` file to GitHub.  
+- Replace \`************\` with your actual keys.  
+
+---
+
+## 📦 Installation & Setup
+
+Clone the repo:
+
+\`\`\`bash
+git clone https://github.com/YashPuniwala/Trello-clone.git
+cd Trello-clone
+\`\`\`
+
+Install dependencies:
+
+\`\`\`bash
+npm install
+\`\`\`
+
+Run Prisma migrations:
+
+\`\`\`bash
+npx prisma generate
+npx prisma migrate dev
+\`\`\`
+
+Run the development server:
+
+\`\`\`bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+\`\`\`
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Visit: [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🔑 Authentication (Clerk)
 
-## Learn More
+- Visit [Clerk Dashboard](https://dashboard.clerk.com/) to get your keys.
+- Add **sign-in** and **sign-up** URLs in Clerk to match your `.env` values.
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 💳 Stripe Setup
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Get your **Stripe API Key** and **Webhook Secret** from the [Stripe Dashboard](https://dashboard.stripe.com/).
+2. Start the Stripe CLI in your project:
 
-## Deploy on Vercel
+   \`\`\`bash
+   stripe listen --forward-to localhost:3000/api/webhook
+   \`\`\`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+3. Copy the Webhook Secret from the CLI output and paste it into `.env`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## 🛠️ Database (PostgreSQL + Prisma)
+
+- This project uses [Neon.tech](https://neon.tech/) PostgreSQL hosting.
+- Update your `.env` with the provided \`DATABASE_URL\`.
+- Run migrations after making schema changes:
+
+\`\`\`bash
+npx prisma migrate dev
+\`\`\`
+
+---
+
+## 📸 Screenshots (Optional)
+
+(Add screenshots of your project UI here for better presentation)
+
+---
+
+## 📜 License
+
+This project is open-source and available under the [MIT License](LICENSE).
+
+---
+
+## 👨‍💻 Author
+
+Built with ❤️ by **[Yash Puniwala](https://github.com/YashPuniwala)**
