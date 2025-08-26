@@ -10,6 +10,7 @@ import { redirect } from "next/navigation";
 import { createAuditLog } from "@/lib/create-audit-log";
 import { ACTION, ENTITY_TYPE } from "@prisma/client";
 import { decreaseAvailableCount } from "@/lib/org-limit";
+import { checkSubscription } from "@/lib/subscription";
 
 const handler = async (data: InputType): Promise<ReturnType> => {
   const { orgId, userId } = await auth();
@@ -19,6 +20,8 @@ const handler = async (data: InputType): Promise<ReturnType> => {
       errors: "Unauthorized",
     };
   }
+
+  const isPro = await checkSubscription();
 
   const { id } = data;
   let board;
@@ -31,16 +34,18 @@ const handler = async (data: InputType): Promise<ReturnType> => {
       },
     });
 
-    await decreaseAvailableCount()
+    if (!isPro) {
+      await decreaseAvailableCount();
+    }
 
-     await createAuditLog({
+    await createAuditLog({
       entityTitle: board.title,
       entityId: board.id,
       entityType: ENTITY_TYPE.BOARD,
-      action: ACTION.CREATE
-    })
+      action: ACTION.CREATE,
+    });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return {
       errors: "Failed to delete.",
     };

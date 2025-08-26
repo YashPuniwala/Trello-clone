@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 
-const DAY_IN_MS = 84_400_000;
+const DAY_IN_MS = 86_400_000;
 
 export const checkSubscription = async () => {
   const { orgId } = await auth();
