@@ -142,7 +142,7 @@ const ListContainer = ({ data, boardId }: ListContainerProps) => {
           <ol
             {...provided.droppableProps}
             ref={provided.innerRef}
-            className="flex gap-x-3 h-full"
+            className="flex flex-wrap gap-3 h-full items-start"
           >
             {orderedData.map((list, index) => (
               <ListItem key={list.id} index={index} data={list} />
